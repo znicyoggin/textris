@@ -1,0 +1,2 @@
+git init
+git pull https://github.com/znicyoggin/textris.git
