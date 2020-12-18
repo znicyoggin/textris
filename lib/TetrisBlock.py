@@ -50,9 +50,25 @@ def relative_position(shape, block_num, rotation):
 		("BACKWARDS-L", 3, 0)	:	(1,2)	#	
 	}
 	return lookup_relative_position.get((shape, block_num), False)
-	
-def log_error(msg):
-	print(msg)
+
+logger_level = "DEBUG"
+def log_map(level):
+        lookup_log_map = {
+                "DEBUG":0,
+                "INFO":1,
+                "ALERT":2,
+                "ERROR":3
+                }
+        return lookup_log_map.get(level, 0)
+
+def log_error(msg, msg_level = "ERROR"):
+        #If level is DEBUG: always do
+        #If level is INFO: only show when msg_level is
+        curr_weight = log_map(logger_level)
+        msg_weight = log_map(msg_level)
+        
+        if msg_weight >= curr_weight:
+	        print(msg)
 
 	
 """
@@ -63,27 +79,26 @@ Tetris Pieces
 class TetrisPiece(object):
 	
 	def __init__(self, block_type = None, anchor_position = None, rotation = 0):
-		self.block_type 			= block_type
-		self.anchor_position 	= anchor_position
-		self.rotation 				= rotation
-		
-		#Validate Block type and position
-		if  self.block_type is not None:
-			
-			if self.block_type not in block_types: 
-				log_error("Invalid block type")
+                self.block_type= block_type
+                self.anchor_position= anchor_position
+                self.rotation= rotation
+
+                #Validate Block type and position
+                if self.block_type is not None:
+                        if self.block_type not in block_types: 
+                                log_error("Invalid block type")
 				return false
 			if self.anchor_position is None:
 				log_error("Anchor Position not provided")
 				return False
-			
+
+                        self.coordinates = []
 			#Determine coordinates for all blocks in the shape
-			for i in range(4)
-				self.coordinates[i] = self.anchor_position + relative_position(block_type, i, rotation)
-			
-			
-			return True
-			
+			for i in range(4):
+                                self.coordinates[i] = self.anchor_position + relative_position(self.block_type, i, self.rotation)
+                                log_error(self.coordinates[i], "DEBUG")
+                                return False
+                                
 		def get_coordinates():
 			return self.coordinates
 		
@@ -93,7 +108,7 @@ class TetrisPiece(object):
 				return False
 				
 			return self.block_type
-	
+                
 """
 
 Game board
@@ -102,7 +117,7 @@ Game board
 	
 class GameBoard(object):
 	def __init__(rows, columns)
-		self.num_rows			=	rows
+		self.num_rows		=	rows
 		self.num_columns	=	columns
 	
 		self.coordinates = {}
@@ -131,3 +146,6 @@ class GameBoard(object):
 				
 				
 		
+if __name__ == "__main__":
+        #Run basic tests of functionality
+        test_square = TetrisBlock("SQUARE", (0,0), 0)
