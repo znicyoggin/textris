@@ -62,8 +62,6 @@ def log_map(level):
         return lookup_log_map.get(level, 0)
 
 def log_error(msg, msg_level = "ERROR"):
-        #If level is DEBUG: always do
-        #If level is INFO: only show when msg_level is
         curr_weight = log_map(logger_level)
         msg_weight = log_map(msg_level)
         
@@ -83,35 +81,44 @@ class TetrisPiece(object):
 		self.anchor_position= anchor_position
 		self.rotation= rotation
 
-        #Validate Block type and position
-		if self.block_type is not None:
-			if self.block_type not in block_types: 
-				log_error("Invalid block type")
-				return 
-			if self.anchor_position is None:
-				log_error("Anchor Position not provided")
-				return
-			if not type(anchor_position) is tuple:
-				log_error("Anchor position {} is not valid.")
-				return
-			self.coordinates = []
+                #Validate Block type
+                return if not ValidateBlockType()
+                
+                
+        	if self.anchor_position is None:
+			log_error("Anchor Position not provided")
+			return
+		if not type(anchor_position) is tuple:
+			log_error("Anchor position {} is not valid.")
+			return
+		self.coordinates = []
 			
-			#Determine coordinates for all blocks in the shape
-			log_error("Displaying initial coordinates for {}".format(self.block_type), "DEBUG")
-			for i in range(4):
-				self.coordinates.append(tuple(map(lambda i, j: i + j, self.anchor_position, relative_position(self.block_type, i, self.rotation))))
-				log_error(self.coordinates[i], "DEBUG")
+		#Determine coordinates for all blocks in the shape
+		log_error("Displaying initial coordinates for {}".format(self.block_type), "DEBUG")
+		for i in range(4):
+			self.coordinates.append(tuple(map(lambda i, j: i + j, self.anchor_position, relative_position(self.block_type, i, self.rotation))))
+			log_error(self.coordinates[i], "DEBUG")
                 
 				
 		def get_coordinates():
 			return self.coordinates
 		
 		def get_shape():
-			if shape not in block_types:
-				log_error("not a valid block type")
-				return False
-				
-			return self.block_type
+                        return self.block_type
+                
+                def ValidateBlockType():
+                        valid_block_type = True
+                        if type(self.block_type) is None:
+                                log_error("No block type provided")
+                                return not valid_block_type
+                        if not self.block_type is str:
+                                log_error("block type is not a string")
+                                return not valid_block_type
+                        if self.block_type not in block_types:
+		                log_error("{} is not a block type".format(block_type))
+                                return not valid_block_type
+                        return valid_block_type
+	
                 
 """
 
