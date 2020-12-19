@@ -1,3 +1,5 @@
+from logger import *
+
 #Predefine the shapes here
 #Add ability to assign a tetris block as a part of a shape
 
@@ -58,23 +60,6 @@ def relative_position(shape, block_num, rotation):
 	}
 	return lookup_relative_position.get((shape, block_num, rotation), False)
 
-logger_level = "DEBUG"
-def log_map(level):
-        lookup_log_map = {
-                "DEBUG"	: 0,
-                "INFO"		: 1,
-                "ALERT"	: 2,
-                "ERROR"	: 3
-                }
-        return lookup_log_map.get(level, 0)
-
-def log_error(msg, msg_level = "ERROR"):
-        curr_weight = log_map(logger_level)
-        msg_weight = log_map(msg_level)
-        
-        if msg_weight >= curr_weight:
-	        print(msg)
-
 	
 """
 Tetris Pieces
@@ -131,49 +116,14 @@ class TetrisPiece(object):
 			return valid_block_type
 	
                 
-"""
-
-Game board
-
-"""
-	
-class GameBoard(object):
-	def __init__(self, rows, columns):
-		self.num_rows		=	rows
-		self.num_columns	=	columns
-	
-		self.coordinates = {}
-	
-		for x in range(num_rows):
-			for y in range(num_columns):
-				self.coordinates[(x,y)] = None
-				
-		return True
-		
-	def set(self, coordinate, shape):
-		if shape not in block_types: 
-			log_error("Not a valid shape")
-			return False
 			
-		self.coordinates[coordinate] = shape
-		return True
-	
-	def at(coordinate):
-		(x, y) = coordinates
-		if x < 0 or x >= self.num_rows or y < 0 or y >= self.num_columns:
-			log_error("invalid coordinates")
-			return False
-			
-		return self.coordinates[coordinate]
-				
-				
 		
 if __name__ == "__main__":
 	#Run basic tests of functionality
 	test_square 	= TetrisPiece("SQUARE", (0,0), 0)
 	test_zpiece		= TetrisPiece("Z-PIECE", (11,32), 0)
 	test_circle		= TetrisPiece("CIRCLE", (0,0), 0)
-	test_nowhere		= TetrisPiece("SQUARE")
-	test_bad_loc		= TetrisPiece("SQUARE", 22)
-	test_rotate_1 = TetrisPiece("LINE", (0,0), 1)	
-	test_rotate_2 = TetrisPiece("S-PIECE", (22,11), 3)
+	test_nowhere	= TetrisPiece("SQUARE")
+	test_bad_loc	= TetrisPiece("SQUARE", 22)
+	test_rotate_1 	= TetrisPiece("LINE", (0,0), 1)	
+	test_rotate_2 	= TetrisPiece("S-PIECE", (22,11), 3)
