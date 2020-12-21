@@ -9,7 +9,7 @@ block_types = [
 "S-PIECE",
 "L-PIECE",
 "J-PIECE",
-"T-PIECE"
+"T-PIECE",
 "LINE"
 ]
 
@@ -84,7 +84,9 @@ class TetrisPiece(object):
 			log_error("Anchor position {} is not valid.".format(self.anchor_position))
 			return
 		self.coordinates = []
-			
+        
+        self.is_falling = False
+        
 		#Determine coordinates for all blocks in the shape
 		log_error("Displaying initial coordinates for {}".format(self.block_type), "DEBUG")
 		for i in range(4):
@@ -95,7 +97,19 @@ class TetrisPiece(object):
 			self.coordinates.append(tuple(map(lambda i, j: i + j, self.anchor_position, rotation_modifier)))
 			log_error(self.coordinates[i], "DEBUG")
                 
-				
+	def is_falling(self):
+        if self.is_falling:
+            return True
+        else: return False
+        
+     def falling(self):
+        self.is_falling = True
+        
+     def grounded(self):
+        self.is_falling = False
+        
+
+            
 	def get_coordinates(self):
 		return self.coordinates
 	
