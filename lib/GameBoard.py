@@ -78,10 +78,11 @@ class GameBoard(object):
         new_block_locations = []
         current_piece = self.piece_list[self.current_piece_index]
         if not current_piece.is_falling: 
-            log_error("Nothing is falling since multifall is {}".format(self.multi_fall), "DEBUG")
+            log_error("Nothing is falling.", "DEBUG")
             return
         shape = current_piece.shape()
         curr_block_locations = current_piece.get_coordinates()
+        done_falling = False
         for (x,y) in curr_block_locations:
             if x <= 0 or x > self.num_rows or y <= 0 or y > self.num_columns: 
                 log_error("Cannot apply gravity to {} at {}.  It is out of bounds".format(shape, (x, y)))
@@ -89,9 +90,13 @@ class GameBoard(object):
             temp_loc = (x, y-1)
             if self.not_empty(temp_loc) and temp_loc not in curr_block_locations:
                 log_error("{} has stopped falling since it has reached {} which is populated by {}".format(shape, temp_loc, self.at(temp_loc)), "DEBUG")
-                return 
+                return
+            if y-1 == 0: done_falling = True
             new_block_locations.append(temp_loc)
-            
+        if done_falling:
+            log_error("Piece is done falling", "DEBUG")
+            current_piece.grounded()
+            return
         #loop through all unique positions and apply the movement to the board
         for position in combine_unique(curr_block_locations, new_block_locations):
             print(position )
