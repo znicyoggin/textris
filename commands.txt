@@ -1,3 +1,0 @@
-git init
-git remote add textris https://github.com/znicyoggin/textris.git
-git pull https://github.com/znicyoggin/textris.git
