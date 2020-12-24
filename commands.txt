@@ -1,0 +1,14 @@
+#Initialize
+git init
+git push -u origin main
+git pull https://github.com/znicyoggin/textris.git
+
+#Clone git clone https://znicyoggin@github.com/znicyoggin/textris.git
+
+#Send updates from 2nd computer
+git add .
+git commit -m "here is the test message"
+git push -u origin master
+
+#Pull updates back to 1st computer
+git pull OR git pull origin main

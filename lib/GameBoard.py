@@ -4,9 +4,7 @@ from Config import *
 from utilities import combine_unique
 
 """
-
 Game board
-
 """
     
 class GameBoard(object):
@@ -183,9 +181,3 @@ if __name__ == "__main__":
     for i in range(40):
         if i + display_cols >= num_cols: test_game_board.display_board(display_cols)
         test_game_board.apply_gravity()
-    
-    
-
-    
-                
-    
