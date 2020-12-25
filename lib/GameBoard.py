@@ -178,6 +178,13 @@ if __name__ == "__main__":
     test_game_board.display_board(display_cols)
 
     print("After falling:")
-    for i in range(40):
-        if i + display_cols >= num_cols: test_game_board.display_board(display_cols)
-        test_game_board.apply_gravity()
+    for j in range(40):
+        test_game_board.place_block("Z-PIECE", start_loc)
+        
+        for i in range(40):
+            if i + display_cols >= num_cols: test_game_board.display_board(display_cols)
+            test_game_board.apply_gravity()
+            input("Press Enter to continue...")
+ 
+
+    
