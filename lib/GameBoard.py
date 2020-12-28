@@ -130,7 +130,12 @@ class GameBoard(object):
             return False
             
         return self.coordinates[coordinates]
-     
+    
+    def rotate_piece(self, index = None):
+        if index is None: index = self.current_piece_index
+        
+        return index
+        
     #Display a textual version of the game board
     def display_board(self, hide_column_count = 0, coordinates_only = False):
         for y in range(self.num_columns-1-hide_column_count, 0, -1):
@@ -173,8 +178,7 @@ if __name__ == "__main__":
     """
     
     """
-    Testing Gravity
-    """
+    #Testing Gravity
     test_game_board.display_board(display_cols)
 
     print("After falling:")
@@ -185,6 +189,7 @@ if __name__ == "__main__":
             if i + display_cols >= num_cols: test_game_board.display_board(display_cols)
             test_game_board.apply_gravity()
             input("Press Enter to continue...")
+    """
  
 
     
