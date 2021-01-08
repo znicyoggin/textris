@@ -104,23 +104,49 @@ class GameBoard(object):
         log_error("{} has successfully fallen.  Replacing old coordinates".format(shape))
         current_piece.set_coordinates(new_block_locations)
         
-            
+    def valid_coordinate(self, coordinate):
+        is_valid = True
+        (x, y) = coordinate
+        #out of bounds
+        if self.is_coordinate_out_of_bounds(coordinate): is_valid = False
+        
+        #detect collision
+        elif self.not_empty(coordinate): is_valid = False
+        return is_valid
+        
+    def is_coordinate_out_of_bounds(self, coordinate):
+        (x,y) = coordinate
+        return False if x <= 0 or x > self.num_rows or y <= 0 or y > self.num_columns else True
+        
     #Is a location populated with a block?
-    def not_empty(self, coordinates):
-        return True if self.coordinates[coordinates] is not None else False
+    def not_empty(self, coordinate):
+        return True if self.coordinates[coordinate] is not None else False
     
     #Is a location populated with a block?
-    def empty(self, coordinates):
-        return False if self.coordinates[coordinates] is not None else True
+    def empty(self, coordinate):
+        return False if self.coordinates[coordinate] is not None else True
 
     #Set a single block
-    def set(self, coordinates, shape):
+    def set(self, coordinate, shape):
         if shape is not None and shape not in block_types: 
             log_error("Not a valid shape")
             return False
             
-        self.coordinates[coordinates] = shape
+        self.coordinates[coordinate] = shape
         return True
+        
+   #Move current piece left or right - arbitrarily right by default
+    def move_lateral(move_right = True):
+        if not isInstance(move_right, types.BooleanType):
+            log_error("Parameter 'move_right' should be a boolean. move_right = {}".format(move_right))
+        current_piece = self.piece_list[self.current_piece_index]
+        x_adjust = 0
+        if move_right: x_adjust = 1
+        else: x_adjust = -1
+        
+        new_coordinates = current_piece.transform_coordinates(0,x_adjust)
+        #validate
+        return False#Only return true if the move is committed
     
     #What type of block is here?
     def at(self, coordinates):
@@ -167,20 +193,19 @@ if __name__ == "__main__":
     #test_game_board.place_block("Z-PIECE", (7,0))
     #test_game_board.place_block("LINE", (3,4))
     """
-    
+    """
     #Place a block at the starting location
     start_loc = test_game_board.DropSpot()
     test_game_board.place_block("Z-PIECE", start_loc)
-    
+    """
     """
     #Display the coordinates [hide columns count, coordinates only]
     test_game_board.display_board(0, True)
     """
     
-    """
     #Testing Gravity
     test_game_board.display_board(display_cols)
-
+    start_loc = test_game_board.DropSpot()
     print("After falling:")
     for j in range(40):
         test_game_board.place_block("Z-PIECE", start_loc)
@@ -188,8 +213,11 @@ if __name__ == "__main__":
         for i in range(40):
             if i + display_cols >= num_cols: test_game_board.display_board(display_cols)
             test_game_board.apply_gravity()
-            input("Press Enter to continue...")
-    """
+            dir = input("Press Enter to continue. Try moving a piece with l or r")
+            #right = True
+            #left = False
+            #if dir == "l": test_game_board.move_lateral(right)
+            #elif dir == "r": test_game_board.move_lateral(left)
  
 
     
