@@ -1,5 +1,6 @@
-from logger import *
-from utilities import add_coordinates
+from lib.logger import *
+from lib.utilities import add_coordinates
+from random import randrange
 
 #Predefine the shapes here
 #Add ability to assign a tetris block as a part of a shape
@@ -24,6 +25,9 @@ num_rotations = {
 "LINE": 1
 }
 
+def random_shape():
+    return block_types[randrange(len(block_types))]
+    
 def relative_position(shape, block_num, rotation):
     #lookup relative position for any block of any shape
     lookup_relative_position = {            # (x, y)
@@ -199,10 +203,12 @@ class TetrisPiece(object):
 
     #Current coordinates for each part of this piece
     def get_coordinates(self):
+        if len(self.coordinates) > 4: log_error("Error: Too many coordinates")
         return self.coordinates
     
     #Transformations only return coordinates, commit of new coordinates is implementation specific
     def transform_coordinates(self, rotate=0, adjust_x=0):
+        log_error("transform_coordinates called with rotate={}, adjust_x={}\n".format(rotate, adjust_x),"DEBUG")
         #Validate parameters
         if rotate not in (-1, 0, 1):            
             log_error("Invalid Rotation Passed: {}".format(rotate))
@@ -214,14 +220,13 @@ class TetrisPiece(object):
         new_rotation = self.rotation
         if abs(rotate) != 0: 
             new_rotation = (self.rotation + rotate) % (num_rotations[self.block_type] + 1)
-        
+        """
         if new_rotation == 0 and adjust_x == 0:
             log_error("No change to coordinates.")
             return False
-            
+        """    
         new_coordinates = []
-        log_error("Transforming coordinates with New rotation = {} and Adjust_X = {} \n".format(new_rotation, adjust_x), "DEBUG")
-        log_error("New Coordinates:", "DEBUG")
+        #log_error("New Coordinates:", "DEBUG")
         for i in range(4): 
             rotation_modifier = relative_position(self.block_type, i, new_rotation)
             if rotation_modifier == False:
@@ -231,14 +236,22 @@ class TetrisPiece(object):
             adjustment = add_coordinates(rotation_modifier, (adjust_x, 0))
        
             new_coordinates.append(add_coordinates(self.anchor_position, adjustment))
-            log_error(new_coordinates[i], "DEBUG")
+            #log_error(new_coordinates[i], "DEBUG")
             
            
         return new_coordinates
         
-
+    def about_piece(self):
+        print("--------------------------------------------------")
+        print("The {} is on rotation #{} of {}".format(self.block_type, self.rotation, num_rotations[self.block_type]))
+        print("It is anchored at {}".format(self.anchor_position))
+        print("Coordinates:{}".format(self.coordinates))
+        print("Piece is{} falling".format(" not" if not self.is_falling else ""))
+        print("--------------------------------------------------")
+        
     #Set new coordinates for each part of the piece
     def set_coordinates(self, new_coordinates):
+        if len(new_coordinates) > 4: log_error("Error: too many blocks")
         self.coordinates = new_coordinates
         return
     
@@ -248,6 +261,30 @@ class TetrisPiece(object):
         
     def shape(self):
         return self.block_type
+    
+    def get_anchor(self):
+        return self.anchor_position
+    
+    def set_anchor(self, position):
+        self.anchor_position = position
+        return
+    
+    def descend(self):
+        (x, y) =  self.anchor_position
+        self.anchor_position = (x, y-1)
+        return
+        
+    def lateral(self, x_adjust):
+        (x, y) = self.anchor_position
+        self.anchor_position = (x + x_adjust, y)
+        return
+    
+    def make_rotation(self, modifier):
+        new_rotation = (self.rotation + modifier) % (num_rotations[self.block_type]+1)
+        log_error("Moving {} from rotation #{} to rotation #{}".format(self.block_type, self.rotation, new_rotation), "DEBUG")
+        log_error("new_rotation = {} = ({} + {}) % {}".format( new_rotation, self.rotation, modifier, num_rotations[self.block_type]), "DEBUG")
+        self.rotation = new_rotation
+        return self.rotation
         
      #Is this a valid type of block?
     def ValidateBlockType(self):
@@ -263,10 +300,6 @@ class TetrisPiece(object):
                 return not valid_block_type
             return valid_block_type
         
-     
-    
-                
-            
         
 if __name__ == "__main__":
     """

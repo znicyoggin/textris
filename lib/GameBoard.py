@@ -1,7 +1,7 @@
-from TetrisBlock import *
-from logger import *
-from Config import *
-from utilities import combine_unique
+from lib.TetrisBlock import *
+from lib.logger import *
+from lib.Config import *
+from lib.utilities import combine_unique
 
 """
 Game board
@@ -24,7 +24,7 @@ class GameBoard(object):
         self.piece_list = []
         
         #Tetris piece which is currently being controlled"
-        self.current_piece_index = None
+        self.current_piece_index = 0
         
         #Flag for when multiple blocks will be falling (Instead of just the current piece)
         self.multi_fall = False
@@ -65,6 +65,11 @@ class GameBoard(object):
             return True
         else: return False
      
+    def falling(self):
+        curr = self.curr_piece()
+        if curr == False: return False
+        return self.curr_piece().falling
+        
     def apply_gravity(self):
         #Verify only one piece is falling
         if len(self.piece_list) == 0:
@@ -82,7 +87,7 @@ class GameBoard(object):
         curr_block_locations = current_piece.get_coordinates()
         done_falling = False
         for (x,y) in curr_block_locations:
-            if x <= 0 or x > self.num_rows or y <= 0 or y > self.num_columns: 
+            if x < 0 or x >= self.num_rows or y < 0 or y >= self.num_columns: 
                 log_error("Cannot apply gravity to {} at {}.  It is out of bounds".format(shape, (x, y)))
                 return
             temp_loc = (x, y-1)
@@ -97,12 +102,13 @@ class GameBoard(object):
             return
         #loop through all unique positions and apply the movement to the board
         for position in combine_unique(curr_block_locations, new_block_locations):
-            print(position )
             if position not in new_block_locations: self.set(position, None) 
             else: self.set(position, shape)
         #Commit new locations to the current piece
-        log_error("{} has successfully fallen.  Replacing old coordinates".format(shape))
         current_piece.set_coordinates(new_block_locations)
+        current_piece.descend()
+        log_error("Gravity Applied to {}:".format(shape), "DEBUG")
+        if logger_level == "DEBUG": self.about_current_piece()
         
     def valid_coordinate(self, coordinate):
         is_valid = True
@@ -116,7 +122,8 @@ class GameBoard(object):
         
     def is_coordinate_out_of_bounds(self, coordinate):
         (x,y) = coordinate
-        return False if x <= 0 or x > self.num_rows or y <= 0 or y > self.num_columns else True
+        return True if x < 0 or x >= self.num_rows or y < 0 or y >= self.num_columns else False
+
         
     #Is a location populated with a block?
     def not_empty(self, coordinate):
@@ -131,23 +138,96 @@ class GameBoard(object):
         if shape is not None and shape not in block_types: 
             log_error("Not a valid shape")
             return False
-            
+        
         self.coordinates[coordinate] = shape
         return True
         
-   #Move current piece left or right - arbitrarily right by default
-    def move_lateral(move_right = True):
-        if not isInstance(move_right, types.BooleanType):
-            log_error("Parameter 'move_right' should be a boolean. move_right = {}".format(move_right))
-        current_piece = self.piece_list[self.current_piece_index]
-        x_adjust = 0
-        if move_right: x_adjust = 1
-        else: x_adjust = -1
-        
-        new_coordinates = current_piece.transform_coordinates(0,x_adjust)
-        #validate
-        return False#Only return true if the move is committed
+    def curr_piece(self):
+        if len(self.piece_list) <= 0: 
+            log_error("No pieces yet","DEBUG")
+            return False
+            
+        print(self.current_piece_index)
+        return self.piece_list[self.current_piece_index]
+
+    """
+    Find a way to combine these two functions
     
+    move_lateral
+    rotate
+    """
+   #Move current piece left or right - arbitrarily right by default
+    def move_lateral(self, move_right = True):
+        if not type(move_right) is bool:
+            log_error("Parameter 'move_right' should be a boolean. move_right = {}".format(move_right))
+        current_piece = self.curr_piece()
+        x_adjust = 1 if move_right else -1
+        log_error("Move right = {}, x adjust = {}, ".format(move_right, x_adjust), "DEBUG")
+        shape = current_piece.shape()
+        current_coordinates = current_piece.get_coordinates()
+        new_coordinates = current_piece.transform_coordinates(0,x_adjust)
+
+        diff_coordinates = []
+        empty_coordinates = []
+
+        for position in combine_unique(current_coordinates, new_coordinates):
+            if position not in current_coordinates:
+                if self.is_coordinate_out_of_bounds(position):
+                    log_error("Cannot move {} {}. {} is out of bounds.".format(shape, "right" if move_right else "left", position), "DEBUG")
+                    return False
+                elif self.not_empty(position):
+                    print(position)
+                    log_error("Cannot move {} {}. {} is occupied by {}.".format(shape, "right" if move_right else "left", self.at(position)), "DEBUG")
+                    return False
+                else: diff_coordinates.append(position)
+            elif position not in new_coordinates: empty_coordinates.append(position)
+            else: pass
+
+        for position in empty_coordinates: self.set(position, None)#if self.set(position, None): print("Success.  Position {} is {}".format(position, "empty" if self.empty(position) else "not empty"))     
+        for position in diff_coordinates: self.set(position, shape)
+
+        current_piece.set_coordinates(new_coordinates)
+        current_piece.lateral(x_adjust)
+        log_error("Moving {} {}:\n".format(shape, "right" if move_right else "left"), "DEBUG")
+        if logger_level == "DEBUG": self.about_current_piece()
+        return True#Only return true if the move is committed
+    
+    def rotate(self, clockwise = True):
+        if not type(clockwise) is bool:
+            log_error("Parameter 'clockwise' should be a boolean. clockwise= {}".format(clockwise))
+        move_type_str = "clockwise" if clockwise else "counter-clockwise"
+
+        current_piece = self.curr_piece()
+        shape = current_piece.shape()
+        log_error("Moving {} {}".format(shape, move_type_str), "DEBUG")
+
+        current_coordinates = current_piece.get_coordinates()
+        new_coordinates = current_piece.transform_coordinates(1 if clockwise else -1,0)
+        print(current_coordinates)
+        diff_coordinates = []
+        empty_coordinates = []
+
+        for position in combine_unique(current_coordinates, new_coordinates):
+            if position not in current_coordinates:
+                if self.is_coordinate_out_of_bounds(position):
+                    log_error("Cannot move {} {}. {} is out of bounds.".format(shape, move_type_str, position), "DEBUG")
+                    return False
+                elif self.not_empty(position):
+                    log_error("Cannot move {} {}. {} is occupied by {}.".format(shape, move_type_str, self.at(position)), "DEBUG")
+                    return False
+                else: diff_coordinates.append(position)
+            elif position not in new_coordinates: empty_coordinates.append(position)
+            else: pass
+
+        for position in empty_coordinates: self.set(position, None)#if self.set(position, None): print("Success.  Position {} is {}".format(position, "empty" if self.empty(position) else "not empty"))     
+        for position in diff_coordinates: self.set(position, shape)
+
+        current_piece.make_rotation(1 if clockwise else -1)
+        current_piece.set_coordinates(new_coordinates)
+        log_error("Rotated {} {}:".format(shape, move_type_str ))
+        if logger_level == "DEBUG": self.about_current_piece()
+        return True#Only return true if the move is committed
+        
     #What type of block is here?
     def at(self, coordinates):
         (x, y) = coordinates
@@ -162,6 +242,11 @@ class GameBoard(object):
         
         return index
         
+    def about_current_piece(self):
+        print("--------------------------------------------------")
+        print("   ~~~ Piece number {} ~~~   ".format(self.current_piece_index))
+        self.curr_piece().about_piece()
+        
     #Display a textual version of the game board
     def display_board(self, hide_column_count = 0, coordinates_only = False):
         for y in range(self.num_columns-1-hide_column_count, 0, -1):
@@ -172,7 +257,20 @@ class GameBoard(object):
                 elif self.not_empty((x,y)): line += "X"
                 else: line += "_"
             print(line)
-        
+"""   
+    #Display a textual version of the game board
+    def test_display_board(self, hide_column_count = 0, coordinates_only = False):
+        for y in range(self.num_columns-1-hide_column_count, 0, -1):
+            print("\r")
+            line = ""
+            for x in range(self.num_rows): 
+                if coordinates_only: line += "({},{})".format(x, y)
+                elif (x,y) in [(4, 19), (5, 18)]: line += "-"
+                elif (x,y) in [(6,19), (7, 18)]: line += "+"
+                elif self.not_empty((x,y)): line += "X"
+                else: line += "_"
+            print(line)
+"""     
 if __name__ == "__main__":
     #Perform tests and learn the syntax
     config = Config("CLASSIC_TETRIS")
@@ -211,13 +309,26 @@ if __name__ == "__main__":
         test_game_board.place_block("Z-PIECE", start_loc)
         
         for i in range(40):
-            if i + display_cols >= num_cols: test_game_board.display_board(display_cols)
+            if i + display_cols >= num_cols: 
+                test_game_board.display_board(display_cols)
+                """
+                #Test moving left or right
+                dir = input("Press Enter to continue. Try moving a piece with l or r"
+                right = True
+                left = False
+                if dir == "l": test_game_board.move_lateral(left)
+                elif dir == "r": test_game_board.move_lateral(right)
+                """
+                """
+                #Test rotation
+                """
+                dir = input("Press Enter to continue. Try rotating a piece with l or r")
+                clockwise = True
+                counterclockwise = False
+                if dir == "l": test_game_board.rotate(counterclockwise)
+                elif dir == "r": test_game_board.rotate(clockwise)
+                print("\r\n\r\n")
             test_game_board.apply_gravity()
-            dir = input("Press Enter to continue. Try moving a piece with l or r")
-            #right = True
-            #left = False
-            #if dir == "l": test_game_board.move_lateral(right)
-            #elif dir == "r": test_game_board.move_lateral(left)
- 
+
 
     
