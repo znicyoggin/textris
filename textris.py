@@ -1,4 +1,5 @@
 from lib.GameBoard import *
+from lib.signal import *
 
 
 def main ():    
@@ -17,15 +18,19 @@ def main ():
     counterclockwise = False
     
     #main loop
-    for j in range(40):
+    while(1):
+        print("Beginning of while loop.  {} is falling".format("Something" if textris.falling() else "Nothing"))
         #Generate a random new tetris block
-        print("Falling" if textris.falling() else "Not falling")
         new_block_type = random_shape()
-        textris.place_block(new_block_type, textris.DropSpot())
+        #print("Dropping {}".format(new_block_type))
+        #textris.place_block(new_block_type, textris.DropSpot())
+        textris.place_block("L-PIECE", textris.DropSpot())
+
         
-        for i in range(40):
+        i = 0
+        while textris.falling():
             if i + display_cols >= num_cols: 
-                print("{} is falling".format("Something" if textris.falling() else "Nothing"))
+                
                 textris.display_board(display_cols)
                 #Move left / right
                 dir = input("a=left, d=right, q=counter-clockwise, e=clockwise")
@@ -36,7 +41,9 @@ def main ():
                 elif dir == "e": textris.rotate(clockwise)
 
                 print("\r\n\r\n")
+                textris.update_stats(3)
             textris.apply_gravity()
+            i += 1
             
 if __name__ == "__main__":
     main()

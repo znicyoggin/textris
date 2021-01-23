@@ -1,167 +1,14 @@
 from lib.logger import *
-from lib.utilities import add_coordinates
-from random import randrange
+from lib.utilities import *
 
-#Predefine the shapes here
-#Add ability to assign a tetris block as a part of a shape
-
-block_types = [
-"SQUARE",
-"Z-PIECE",
-"S-PIECE",
-"L-PIECE",
-"J-PIECE",
-"T-PIECE",
-"LINE"
-]
-
-num_rotations = {
-"SQUARE" : 0,
-"Z-PIECE": 1,
-"S-PIECE": 1,
-"L-PIECE": 3,
-"J-PIECE": 3,
-"T-PIECE": 3,
-"LINE": 1
-}
-
-def random_shape():
-    return block_types[randrange(len(block_types))]
-    
-def relative_position(shape, block_num, rotation):
-    #lookup relative position for any block of any shape
-    lookup_relative_position = {            # (x, y)
-        #SQUARE
-        #Base position : 0
-        ("SQUARE", 0, 0)            :    (0,0),        #    [01-]
-        ("SQUARE", 1, 0)            :    (1,0),        #    [23-]
-        ("SQUARE", 2, 0)            :    (0,-1),        #    
-        ("SQUARE", 3, 0)            :    (1,-1),        #    
-        
-        #Z-PIECE
-        #Base position : 0
-        ("Z-PIECE", 0, 0)            :    (0,0),        #    [01-]
-        ("Z-PIECE", 1, 0)            :    (1,0),        #    [-23]
-        ("Z-PIECE", 2, 0)            :    (1,-1),        #    
-        ("Z-PIECE", 3, 0)            :    (2,-1),        #    
-        
-        #First Rotation : 1
-        ("Z-PIECE", 0, 1)            :    (1,0),        #    [-0]
-        ("Z-PIECE", 1, 1)            :    (0,-1),       #    [12]
-        ("Z-PIECE", 2, 1)            :    (1,-1),       #    [3-]
-        ("Z-PIECE", 3, 1)            :    (0,-2),       #    
-        
-        #S-PIECE
-        #Base position : 0
-        ("S-PIECE", 0, 0)            :    (1,0),        #    [-01]
-        ("S-PIECE", 1, 0)            :    (2,0),        #    [23-]
-        ("S-PIECE", 2, 0)            :    (0,-1),        #    
-        ("S-PIECE", 3, 0)            :    (1,-1),        #    
-
-        #Base position : 1
-        ("S-PIECE", 0, 1)            :    (0,0),        #    [0-]
-        ("S-PIECE", 1, 1)            :    (0,-1),        #    [12]
-        ("S-PIECE", 2, 1)            :    (1,-1),       #    [-3]
-        ("S-PIECE", 3, 1)            :    (1,-2),       #    
-        
-        #J-PIECE        
-        #Base position : 0
-        ("J-PIECE", 0, 0)    :    (1,0),    #    [-0]
-        ("J-PIECE", 1, 0)    :    (1,-1),    #    [-1]
-        ("J-PIECE", 2, 0)    :    (0,-2),    #    [23]
-        ("J-PIECE", 3, 0)    :    (1,-2),    #
-        
-        #First rotation
-        ("J-PIECE", 0, 1)    :    (0,0),    #    [0--]
-        ("J-PIECE", 1, 1)    :    (0,-1),   #    [123]
-        ("J-PIECE", 2, 1)    :    (1,-1),   #
-        ("J-PIECE", 3, 1)    :    (2,-1),   #
-            
-        #Second rotation
-        ("J-PIECE", 0, 2)    :    (0,0),    #    [01]
-        ("J-PIECE", 1, 2)    :    (1,0),   #    [2-]
-        ("J-PIECE", 2, 2)    :    (0,-1),   #    [3-]
-        ("J-PIECE", 3, 2)    :    (0,-2),   #
-        
-        #Third rotation
-        ("J-PIECE", 0, 3)    :    (0,0),    #    [012]
-        ("J-PIECE", 1, 3)    :    (1,0),   #    [--3]
-        ("J-PIECE", 2, 3)    :    (2,0),   #
-        ("J-PIECE", 3, 3)    :    (2,-1),   #
-        
-        #L-PIECE  
-        #Base position
-        ("L-PIECE", 0, 1)    :    (0,0),        #    [0-]
-        ("L-PIECE", 1, 1)    :    (0,-1),       #    [1-]
-        ("L-PIECE", 2, 1)    :    (0,-2),       #    [23]
-        ("L-PIECE", 3, 1)    :    (1,-2),       #    
-        
-        #First Rotation : 1
-        ("L-PIECE", 0, 1)    :    (0,0),        #    [012]
-        ("L-PIECE", 1, 1)    :    (1,0),        #    [3]
-        ("L-PIECE", 2, 1)    :    (2,0),        #    
-        ("L-PIECE", 3, 1)    :    (0,-1),       #    
-        
-        #Second Rotation: 2
-        ("L-PIECE", 0, 2)    :    (0,0),        #    [01]
-        ("L-PIECE", 1, 2)    :    (1,0),        #    [-2]
-        ("L-PIECE", 2, 2)    :    (1,-1),       #    [-3]
-        ("L-PIECE", 3, 2)    :    (1,-2),       #    
-        
-        #Third Rotation: 3
-        ("L-PIECE", 0, 3)    :    (2,0),        #    [--0]
-        ("L-PIECE", 1, 3)    :    (0,-1),        #    [123]
-        ("L-PIECE", 2, 3)    :    (1,-1),       #    
-        ("L-PIECE", 3, 3)    :    (2,-1),       #    
-        
-        #T-PIECE
-        #Base position : 0
-        ("T-PIECE", 0, 0)    :    (1,0),    #    [-0-]
-        ("T-PIECE", 1, 0)    :    (0,-1),   #    [123]
-        ("T-PIECE", 2, 0)    :    (1,-1),    #    
-        ("T-PIECE", 3, 0)    :    (2,-1),    #
-        
-        #First Rotation : 1
-        ("T-PIECE", 0, 1)    :    (0,0),    #    [0-]
-        ("T-PIECE", 1, 1)    :    (0,-1),   #    [12]
-        ("T-PIECE", 2, 1)    :    (1,-1),   #    [3-]
-        ("T-PIECE", 3, 1)    :    (0,-2),   #
-        
-        #Second Rotation : 2
-        ("T-PIECE", 0, 2)    :    (0,0),    #    [012]
-        ("T-PIECE", 1, 2)    :    (1,0),    #    [-3-]
-        ("T-PIECE", 2, 2)    :    (2,0),    #    
-        ("T-PIECE", 3, 2)    :    (1,-1),   #
-        
-        #Third Rotation : 3
-        ("T-PIECE", 0, 3)    :    (1,0),    #    [-0]
-        ("T-PIECE", 1, 3)    :    (0,-1),    #    [12]
-        ("T-PIECE", 2, 3)    :    (1,-1),    #    [-3]
-        ("T-PIECE", 3, 3)    :    (1,-2),   #
-        
-        #Base position : 0
-        ("LINE", 0, 0)                :    (0,0),        #    [0]
-        ("LINE", 1, 0)                :    (0,-1),        #    [1]
-        ("LINE", 2, 0)                :    (0,-2),        #    [2]
-        ("LINE", 3, 0)                :    (0,-3),        #    [3]
-        
-        #First Rotation: 1
-        ("LINE", 0, 1)                :    (0,0),        #    [0123]
-        ("LINE", 1, 1)                :    (1,0),       #    
-        ("LINE", 2, 1)                :    (2,0),       #    
-        ("LINE", 3, 1)                :    (3,0)        #    
-    }
-    return lookup_relative_position.get((shape, block_num, rotation), False)
-
-    
 """
 Tetris Pieces
 
 """
-
 class TetrisPiece(object):
     
     def __init__(self, block_type = None, anchor_position = None, rotation = 0):
+        self.ID = ""
         self.block_type= block_type
         self.anchor_position= anchor_position
         self.rotation= rotation
@@ -189,7 +36,14 @@ class TetrisPiece(object):
                 return
             self.coordinates.append(tuple(map(lambda i, j: i + j, self.anchor_position, rotation_modifier)))
             log_error("{}: {}".format(i, self.coordinates[i]), "DEBUG")
-                
+    
+    def set_ID(self, ID):
+        self.ID = ID
+        return self.ID
+    
+    def get_ID(self):
+        return self.ID
+        
     def is_falling(self):
         if self.is_falling:
             return True
@@ -247,6 +101,7 @@ class TetrisPiece(object):
         print("It is anchored at {}".format(self.anchor_position))
         print("Coordinates:{}".format(self.coordinates))
         print("Piece is{} falling".format(" not" if not self.is_falling else ""))
+        print("Identifier is {}".format(self.ID))
         print("--------------------------------------------------")
         
     #Set new coordinates for each part of the piece

@@ -11,8 +11,11 @@ class GameBoard(object):
     def __init__(self, rows, columns):
         self.num_rows        =    rows
         self.num_columns    =    columns
-    
+        self.index = 0
         self.coordinates = {}
+        
+        self.line_count = 0
+        self.score = 0
     
         for x in range(self.num_rows):
             for y in range(self.num_columns):
@@ -33,7 +36,6 @@ class GameBoard(object):
     def calculate_start_location(self):
         start_x = int(self.num_rows/ 2) - 1
         start_y = self.num_columns - 1
-        print(start_y)
         self.start_loc = (start_x, start_y)
     
     #Return the default location to begin dropping a new tetris piece
@@ -59,6 +61,10 @@ class GameBoard(object):
         if can_place:
             for position in coordinates:
                 self.coordinates[position] = shape
+            
+            newTetrisPiece.set_ID(self.index)
+            self.index += 1
+            
             self.piece_list.append(newTetrisPiece)
             self.current_piece_index = len(self.piece_list) - 1
             if not frozen: self.piece_list[self.current_piece_index].falling()
@@ -68,7 +74,7 @@ class GameBoard(object):
     def falling(self):
         curr = self.curr_piece()
         if curr == False: return False
-        return self.curr_piece().falling
+        return self.curr_piece().is_falling
         
     def apply_gravity(self):
         #Verify only one piece is falling
@@ -93,7 +99,7 @@ class GameBoard(object):
             temp_loc = (x, y-1)
             if self.not_empty(temp_loc) and temp_loc not in curr_block_locations:
                 log_error("{} has stopped falling since it has reached {} which is populated by {}".format(shape, temp_loc, self.at(temp_loc)), "DEBUG")
-                return
+                done_falling = True
             if y-1 == 0: done_falling = True
             new_block_locations.append(temp_loc)
         if done_falling:
@@ -145,9 +151,7 @@ class GameBoard(object):
     def curr_piece(self):
         if len(self.piece_list) <= 0: 
             log_error("No pieces yet","DEBUG")
-            return False
-            
-        print(self.current_piece_index)
+            return False            
         return self.piece_list[self.current_piece_index]
 
     """
@@ -160,6 +164,7 @@ class GameBoard(object):
     def move_lateral(self, move_right = True):
         if not type(move_right) is bool:
             log_error("Parameter 'move_right' should be a boolean. move_right = {}".format(move_right))
+        move_str = "right" if move_right else "left"
         current_piece = self.curr_piece()
         x_adjust = 1 if move_right else -1
         log_error("Move right = {}, x adjust = {}, ".format(move_right, x_adjust), "DEBUG")
@@ -167,17 +172,17 @@ class GameBoard(object):
         current_coordinates = current_piece.get_coordinates()
         new_coordinates = current_piece.transform_coordinates(0,x_adjust)
 
+
         diff_coordinates = []
         empty_coordinates = []
 
         for position in combine_unique(current_coordinates, new_coordinates):
             if position not in current_coordinates:
                 if self.is_coordinate_out_of_bounds(position):
-                    log_error("Cannot move {} {}. {} is out of bounds.".format(shape, "right" if move_right else "left", position), "DEBUG")
+                    log_error("Cannot move {} {}. {} is out of bounds.".format(shape, move_str , position), "DEBUG")
                     return False
                 elif self.not_empty(position):
-                    print(position)
-                    log_error("Cannot move {} {}. {} is occupied by {}.".format(shape, "right" if move_right else "left", self.at(position)), "DEBUG")
+                    log_error("Cannot move {} {}. {} is occupied by {}.".format(shape, move_str, position, self.at(position)), "DEBUG")
                     return False
                 else: diff_coordinates.append(position)
             elif position not in new_coordinates: empty_coordinates.append(position)
@@ -203,7 +208,6 @@ class GameBoard(object):
 
         current_coordinates = current_piece.get_coordinates()
         new_coordinates = current_piece.transform_coordinates(1 if clockwise else -1,0)
-        print(current_coordinates)
         diff_coordinates = []
         empty_coordinates = []
 
@@ -241,6 +245,15 @@ class GameBoard(object):
         if index is None: index = self.current_piece_index
         
         return index
+    
+    #Modify score based on the number of lines cleared
+    def update_stats(self, num_lines):
+        if num_lines not in range(1, 4):
+            log_error("ERROR: Invalid number of lines have been removed.")
+            return
+        self.line_count += num_lines
+        print("Adding {} lines for {} points".format(num_lines, score_calc[num_lines-1]))
+        self.score += score_calc[num_lines-1]
         
     def about_current_piece(self):
         print("--------------------------------------------------")
@@ -249,28 +262,15 @@ class GameBoard(object):
         
     #Display a textual version of the game board
     def display_board(self, hide_column_count = 0, coordinates_only = False):
+        print("Lines: {0:>3} Score: {1:>6}".format(self.line_count, self.score))
         for y in range(self.num_columns-1-hide_column_count, 0, -1):
-            print("\r")
             line = ""
             for x in range(self.num_rows): 
                 if coordinates_only: line += "({},{})".format(x, y)
                 elif self.not_empty((x,y)): line += "X"
                 else: line += "_"
             print(line)
-"""   
-    #Display a textual version of the game board
-    def test_display_board(self, hide_column_count = 0, coordinates_only = False):
-        for y in range(self.num_columns-1-hide_column_count, 0, -1):
-            print("\r")
-            line = ""
-            for x in range(self.num_rows): 
-                if coordinates_only: line += "({},{})".format(x, y)
-                elif (x,y) in [(4, 19), (5, 18)]: line += "-"
-                elif (x,y) in [(6,19), (7, 18)]: line += "+"
-                elif self.not_empty((x,y)): line += "X"
-                else: line += "_"
-            print(line)
-"""     
+
 if __name__ == "__main__":
     #Perform tests and learn the syntax
     config = Config("CLASSIC_TETRIS")
