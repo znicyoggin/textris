@@ -105,7 +105,7 @@ class GameBoard(object):
         if done_falling:
             log_error("Piece is done falling", "DEBUG")
             current_piece.grounded()
-            return
+            return True
         #loop through all unique positions and apply the movement to the board
         for position in combine_unique(curr_block_locations, new_block_locations):
             if position not in new_block_locations: self.set(position, None) 
@@ -246,6 +246,51 @@ class GameBoard(object):
         
         return index
     
+    def cleanup(self):
+        num_lines = 0 #Count of lines
+        
+        highest_multiplier = 0#2 = Double,3 = Triple,4 = Tetris
+        curr_multiplier = 0 
+        
+
+        lines_to_cleanup = []
+        
+        for y in range(self.num_columns):
+            curr_row_complete = True
+            for x in range(self.num_rows):
+                
+
+                if self.empty((x,y)): 
+                    if y == 1: print("{}, {} = {}".format(x, y, self.at((x,y))))
+                    
+                    curr_row_complete = False
+                    continue
+            if curr_row_complete: 
+                num_lines += 1
+                lines_to_cleanup.append(y)
+                multiplier += 1
+                if multiplier > highest_multiplier: highest_multiplier = multiplier
+            else:
+                multiplier = 0
+        if num_lines == 0: 
+            log_error("Nothing to cleanup. ","DEBUG")
+            return
+            
+        for line in lines_to_cleanup:
+            self.clear_line(line)
+        
+        
+       """
+        #Doesn't work
+        grounded = False
+        while not grounded:
+            grounded = self.apply_gravity()
+        """
+        
+            
+    def clear_line(self, y_coord):
+        print("Will clear line #{}".format(y_coord))
+
     #Modify score based on the number of lines cleared
     def update_stats(self, num_lines):
         if num_lines not in range(1, 4):
