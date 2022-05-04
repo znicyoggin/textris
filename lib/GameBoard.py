@@ -94,7 +94,7 @@ class GameBoard(object):
         if not new_coordinates: 
             self.logger.debug("Unable to move piece.  current_piece.move_piece({}) returned {}.".format(move_type, new_coordinates))
             return False
-        self.logger.debug("Moving {}-{} to the {}.".format(current_piece.shape(), self.current_piece_index, "left" if move_type == "T_LEFT" else "right"))
+        self.logger.debug("Moving {}-{}.  Move type is {}.  On {} rotation.".format(current_piece.shape(), self.current_piece_index, move_type, current_piece.rotation))
         i = 0
         need_to_ground_piece = False
         #Validate the new coordinates
@@ -123,8 +123,9 @@ class GameBoard(object):
         if need_to_ground_piece: current_piece.grounded()
         
         #Update the pieces rotation counter
-        if move_type in ["T_ROT_RIGHT", "T_ROT_LEFT"]: self.piece_list[self.current_piece_index].increment_rotation(move_type)
-        
+        #if move_type in ["T_ROT_RIGHT", "T_ROT_LEFT"]: self.piece_list[self.current_piece_index].increment_rotation(move_type)
+        if move_type in ["T_ROT_RIGHT", "T_ROT_LEFT"]: current_piece.increment_rotation(move_type)
+
         return True
         
     def out_of_bounds(self, coordinate):
