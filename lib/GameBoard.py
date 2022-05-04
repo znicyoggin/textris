@@ -11,11 +11,12 @@ Game board
 """
     
 class GameBoard(object):
-    def __init__(self, rows, columns):
+    def __init__(self, rows, columns, max_rows):
         self.logger = Logger(".\logs\GameBoard.log", "DEBUG")
-        self.num_rows        =    rows
-        self.num_columns    =    columns
-    
+        self.num_rows = rows
+        self.num_columns = columns
+        self.max_rows = max_rows
+            
         self.coordinates = {}
     
         for x in range(self.num_columns):
@@ -32,7 +33,9 @@ class GameBoard(object):
         
         #Flag for when multiple blocks will be falling (Instead of just the current piece)
         self.multi_fall = False
-                
+
+        self.game_over = False
+        
     #Calculate where pieces will drop frome    
     def calculate_start_location(self):
         start_x = int(self.num_columns/ 2) - 1
@@ -76,6 +79,7 @@ class GameBoard(object):
             if piece.is_currently_falling(): return True
         return False
         
+
     def move_piece(self, move_type):
         if move_type == None: return False
         
@@ -85,22 +89,27 @@ class GameBoard(object):
             return False
         
         current_piece = self.piece_list[self.current_piece_index]
-        
+            
         new_coordinates = current_piece.move_piece(move_type)
         if not new_coordinates: 
             self.logger.debug("Unable to move piece.  current_piece.move_piece({}) returned {}.".format(move_type, new_coordinates))
             return False
         self.logger.debug("Moving {}-{} to the {}.".format(current_piece.shape(), self.current_piece_index, "left" if move_type == "T_LEFT" else "right"))
         i = 0
+        need_to_ground_piece = False
         #Validate the new coordinates
-        for (x, y) in new_coordinates:
+        for coordinate in new_coordinates:
             i = i + 1
-            self.logger.debug(" Checking {} coordinate: {}, {}".format(get_placement_str(i), x, y))
+            self.logger.debug(" Checking {} coordinate: {}".format(get_placement_str(i), coordinate))
             
-            if (x, y) in current_piece.get_coordinates(): continue
-            if self.not_empty((x, y)): 
-                self.logger.debug("Unable to move {}-{}. {} coordinate would have been occupied by {}".format(current_piece.shape(), self.current_piece_index, get_placement_str(i), self.at((x, y))))
+            if coordinate in current_piece.get_coordinates(): continue
+            if self.out_of_bounds(coordinate):
+                self.logger.debug("Unable to move {}-{}. {} coordinate would have been out of bounds".format(current_piece.shape(), self.current_piece_index, get_placement_str(i)))
                 return False
+            if self.not_empty(coordinate): 
+                self.logger.debug("Unable to move {}-{}. {} coordinate would have been occupied by {}".format(current_piece.shape(), self.current_piece_index, get_placement_str(i), self.at((coordinate))))
+                return False
+            if coordinate[1] == 0: need_to_ground_piece = True
             continue
         #Update the board
         for position in combine_unique(current_piece.get_coordinates(), new_coordinates):
@@ -109,14 +118,28 @@ class GameBoard(object):
 
         
         #Update new coordinates on current piece
-        self.piece_list[self.current_piece_index].set_coordinates(new_coordinates)
+        #self.piece_list[self.current_piece_index].set_coordinates(new_coordinates)
+        current_piece.set_coordinates(new_coordinates)
+        if need_to_ground_piece: current_piece.grounded()
         
         #Update the pieces rotation counter
         if move_type in ["T_ROT_RIGHT", "T_ROT_LEFT"]: self.piece_list[self.current_piece_index].increment_rotation(move_type)
         
-        
         return True
-                    
+        
+    def out_of_bounds(self, coordinate):
+        x, y = coordinate
+        if x >= self.num_columns or x < 0 or y >= self.num_rows or y < 0: return True
+        if x >= self.num_columns or x < 0 or y >= self.num_rows or y < 0: return True
+        else: return False
+     
+    def is_game_over(self):
+        return self.game_over
+        
+    def game_is_over(self):
+        self.game_over = True
+        return
+    
     def apply_gravity(self):     
         #Verify only one piece is falling
         if len(self.piece_list) == 0:
@@ -137,12 +160,15 @@ class GameBoard(object):
         if len(coordinates) != 4: self.logger.error("{} has {} coordinates: {}".format(current_piece.shape(), len(coordinates), coordinates))
         #Loop through the coordinates of each segment of the tetris piece
         for (x,y) in coordinates:
-            if x <= 0 or x >= self.num_columns or y <= 0 or y >= self.num_rows: 
+            if self.out_of_bounds((x,y)): 
                 self.logger.error("Cannot apply gravity to {} at {}.  It is out of bounds".format(current_piece.shape(), (x, y)))
                 return
             temp_loc = (x, y-1)
+            if temp_loc[1] < 0: return
             if self.not_empty(temp_loc) and temp_loc not in coordinates:
-                self.logger.debug("{} has stopped falling since it has reached {} which is populated by {}".format(shape, temp_loc, self.at(temp_loc)))
+                self.logger.debug("{}-{} has stopped falling since it has reached {} which is populated by {}".format(current_piece.shape(), self.current_piece_index, temp_loc, self.at(temp_loc)))
+                current_piece.grounded()
+                if y >= self.max_rows: self.game_is_over() 
                 return 
             new_coordinates.append(temp_loc)
         if len(new_coordinates) != 4: self.logger.debug("{} shape has an invalid number of new coordinates: {}".format(shape, new_coordinates))
@@ -150,10 +176,10 @@ class GameBoard(object):
         for position in combine_unique(coordinates, new_coordinates):
             if position not in new_coordinates: self.set(position, None) 
             else: 
-                #This location is now occurpied
+                #This location is now occupied
                 self.set(position, current_piece.get_shape())
                 x, y = position
-                if y == 0: current_piece.grounded()
+                if y == 0: current_piece.grounded()#Is this where we add the logic to check for "On top of a piece?"
         #Commit new locations to the current piece
         self.logger.debug("Setting coordinates for {}-{}:\nNEW COORDINATES: {}\n".format(current_piece.shape(), self.current_piece_index, coordinates, new_coordinates))
         current_piece.set_coordinates(new_coordinates)            

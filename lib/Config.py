@@ -7,18 +7,26 @@ class Config(object):
             #Basics
             self.game = "Tetrix"
             self.game_mode = "Classic Tetris"
-            self.num_rows = 40 #Total height of the game board
+            self.num_rows = 24 #Total height of the game board
             self.num_columns = 10 #Number of columns in the tetris board
-            self.num_rows_display = int(self.num_rows/ 2) #Viewable region of the game board
+            self.num_rows_display = 20 #Viewable region of the game board
 
+            #Game related parameters
+            self.max_fps = 40
             #Logger
             self.logger_level = "DEBUG"
             self.log_file_location = ".\\logs\\textris.log"
             
             #Display 
-            self.pixels_x = 1024
-            self.pixels_y = 768
+            self.pixels_x = 500
+            self.pixels_y = 1000
             self.aspect_ratio = self.pixels_x / self.pixels_y
+            self.block_dimensions = (50, 40)
+            #Image Locations
+            self.image_location_blocks = ".//img//blocks"
+            
+            self.level_based_gravity = [1000, 800, 600, 400, 200, 100]
+            self.move_time = 100
             
         else:
             log_error("Invalid Designation")
