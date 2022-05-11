@@ -118,14 +118,15 @@ class GameBoard(object):
 
         
         #Update new coordinates on current piece
-        #self.piece_list[self.current_piece_index].set_coordinates(new_coordinates)
         current_piece.set_coordinates(new_coordinates)
         if need_to_ground_piece: current_piece.grounded()
         
         #Update the pieces rotation counter
-        #if move_type in ["T_ROT_RIGHT", "T_ROT_LEFT"]: self.piece_list[self.current_piece_index].increment_rotation(move_type)
-        if move_type in ["T_ROT_RIGHT", "T_ROT_LEFT"]: current_piece.increment_rotation(move_type)
-
+        if move_type in ["T_ROT_RIGHT", "T_ROT_LEFT"]: 
+            current_piece.increment_rotation(move_type)
+                
+        current_piece.update_anchor_position(move_type)
+        
         return True
         
     def out_of_bounds(self, coordinate):
@@ -183,7 +184,10 @@ class GameBoard(object):
                 if y == 0: current_piece.grounded()#Is this where we add the logic to check for "On top of a piece?"
         #Commit new locations to the current piece
         self.logger.debug("Setting coordinates for {}-{}:\nNEW COORDINATES: {}\n".format(current_piece.shape(), self.current_piece_index, coordinates, new_coordinates))
-        current_piece.set_coordinates(new_coordinates)            
+        current_piece.set_coordinates(new_coordinates)
+
+        #Shortcut to move the anchor down by one space
+        current_piece.update_anchor_position("T_FAST")
     #Is a location populated with a block?
     def not_empty(self, coordinates):
         return True if self.coordinates[coordinates] is not None else False
