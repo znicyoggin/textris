@@ -25,8 +25,17 @@ class Config(object):
             #Image Locations
             self.image_location_blocks = ".//img//blocks"
             
+            #Number of ticks that pass before the tetris piece falls again
             self.level_based_gravity = [1000, 800, 600, 400, 200, 100]
-            self.move_time = 100
+            
+            #Number of ticks that must pass before you can move again
+            self.move_time = 200
+            
+            #Move x times faster when you hold left/right button
+            self.holding_button_move_multiplier = 2
+            
+            #Fall x times faster when you hold the fall button
+            self.fast_fall_speed_multiplier = 2
             
         else:
             log_error("Invalid Designation")

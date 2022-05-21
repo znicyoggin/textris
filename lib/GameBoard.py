@@ -27,6 +27,7 @@ class GameBoard(object):
         
         #All pieces currently on the board
         self.piece_list = []
+        self.completed_lines = []
         
         #Tetris piece which is currently being controlled"
         self.current_piece_index = None
@@ -134,6 +135,32 @@ class GameBoard(object):
         if x >= self.num_columns or x < 0 or y >= self.num_rows or y < 0: return True
         if x >= self.num_columns or x < 0 or y >= self.num_rows or y < 0: return True
         else: return False
+     
+    def check_for_lines(self):
+        num_lines_consecutive = 0
+        completed_lines = []
+        last_row_line = None
+
+        for y in range(self.num_rows):
+            is_complete = True
+            for x in range(self.num_columns):
+                if self.empty((x, y)) : is_complete = False
+            if is_complete:
+                if last_row_line == x-1: num_lines_consecutive += 1
+                last_row_line = x
+        if last_row_line is None: return 0
+        
+        self.completed_lines = completed_lines
+        print("Checking for completed lines. {}, {}".format(self.completed_lines, num_lines_consecutive))
+        return num_lines_consecutive
+    
+    def get_completed_lines(self):
+        return self.completed_lines
+        
+    def cleanup_lines(self):
+        for x in self.completed_lines:
+            for y in self.num_cols:
+                self.set((x,y), None)
      
     def is_game_over(self):
         return self.game_over
